@@ -1,3 +1,11 @@
+import sys
+import subprocess
+try:
+    import openpyxl
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "openpyxl"])
+    import openpyxl
+
 import streamlit as st
 import pandas as pd
 import io
