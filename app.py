@@ -180,14 +180,46 @@ if lib_file and data_file:
                 
                 # Tạo file Excel để tải xuống
                 from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
+                from openpyxl.utils import get_column_letter
                 
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     merged_df.to_excel(writer, sheet_name="Chi tiết dự án", index=False)
                     agg_df.to_excel(writer, sheet_name="Tổng hợp phân loại", index=False)
                     
-                    # Format Excel cho đẹp mắt
+                    # Định vị cột trong 'Chi tiết dự án' (vị trí 1-based)
+                    pl_col_idx = merged_df.columns.get_loc(pl_col_name) + 1
+                    dv_col_idx = merged_df.columns.get_loc(col_dv_chuan) + 1
+                    kl_col_idx = merged_df.columns.get_loc(col_kl_quydoi) + 1
+                    tt_col_idx = merged_df.columns.get_loc(data_thanh_tien) + 1
+                    
+                    pl_col_letter = get_column_letter(pl_col_idx)
+                    dv_col_letter = get_column_letter(dv_col_idx)
+                    kl_col_letter = get_column_letter(kl_col_idx)
+                    tt_col_letter = get_column_letter(tt_col_idx)
+                    
+                    # Định vị cột trong 'Tổng hợp phân loại'
+                    sum_pl_col_idx = agg_df.columns.get_loc(pl_col_name) + 1
+                    sum_dv_col_idx = agg_df.columns.get_loc(col_dv_chuan) + 1
+                    sum_kl_col_idx = agg_df.columns.get_loc(col_kl_quydoi) + 1
+                    sum_tt_col_idx = agg_df.columns.get_loc(data_thanh_tien) + 1
+                    
+                    sum_pl_col_letter = get_column_letter(sum_pl_col_idx)
+                    sum_dv_col_letter = get_column_letter(sum_dv_col_idx)
+                    
                     workbook = writer.book
+                    ws_summary = workbook["Tổng hợp phân loại"]
+                    
+                    # Ghi Công thức (Formula) cho khối lượng và thành tiền để tự update khi sửa "Chi tiết"
+                    for r in range(2, len(agg_df) + 2):
+                        # Thay vì giá trị tĩnh, ta ghi công thức SUMIFS
+                        kl_formula = f"=SUMIFS('Chi tiết dự án'!{kl_col_letter}:{kl_col_letter}, 'Chi tiết dự án'!{pl_col_letter}:{pl_col_letter}, {sum_pl_col_letter}{r}, 'Chi tiết dự án'!{dv_col_letter}:{dv_col_letter}, {sum_dv_col_letter}{r})"
+                        tt_formula = f"=SUMIFS('Chi tiết dự án'!{tt_col_letter}:{tt_col_letter}, 'Chi tiết dự án'!{pl_col_letter}:{pl_col_letter}, {sum_pl_col_letter}{r}, 'Chi tiết dự án'!{dv_col_letter}:{dv_col_letter}, {sum_dv_col_letter}{r})"
+                        
+                        ws_summary.cell(row=r, column=sum_kl_col_idx).value = kl_formula
+                        ws_summary.cell(row=r, column=sum_tt_col_idx).value = tt_formula
+                    
+                    # Format Excel cho đẹp mắt
                     bold_font = Font(bold=True)
                     header_font = Font(bold=True, color="FFFFFF")
                     header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
