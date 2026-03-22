@@ -25,8 +25,8 @@ with col2:
 if lib_file and data_file:
     try:
         # Tải dữ liệu
-        df_lib = pd.read_excel(lib_file)
-        df_data = pd.read_excel(data_file)
+        df_lib = pd.read_excel(lib_file, engine='openpyxl')
+        df_data = pd.read_excel(data_file, engine='openpyxl')
         
         st.success("✅ Tải file thành công! Hãy chọn các cột tương ứng bên dưới để xử lý.")
         
